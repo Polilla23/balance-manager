@@ -35,6 +35,17 @@ class Movement {
 const movementType1 = new MovementType(1, "Ingreso");
 const movementType2 = new MovementType(2, "Egreso");
 
+const movementTypesButton = [
+  {
+    type: 'Ingreso',
+    button: 'add-income'
+  },
+  {
+    type: 'Egreso',
+    button: 'add-egress'
+  }
+]
+
 const reason1 = new Reason(1, "Razon 1", 1);
 const reason2 = new Reason(2, "Razon 2", 1);
 const reason3 = new Reason(3, "Razon 3", 1);
@@ -46,9 +57,9 @@ const reason8 = new Reason(8, "Razon 8", 2);
 const reason9 = new Reason(9, "Razon 9", 2);
 const reason10 = new Reason(10, "Razon 10", 2);
 
-const movement1 = new Movement(1, new Date(), 2, "nota1", 1200, 1);
-const movement2 = new Movement(1, new Date(), 1, "nota1", 2500, 1);
-const movement3 = new Movement(1, new Date(), 9, "nota1", 1000, 1);
+const movement1 = new Movement(1, new Date(), 2, "Nota 1", 1200, 1);
+const movement2 = new Movement(2, new Date(), 1, "Nota 2", 2500, 1);
+const movement3 = new Movement(3, new Date(), 9, "Nota 3", 1000, 1);
 
 const user1 = new User("user1@example.com", "123", 1);
 const user2 = new User("user2@example.com", "456", 2);
@@ -104,6 +115,7 @@ function displayApp() {
   populateMovementsTable();
   generateSummaryChart();
   addMovementBehaviour();
+  movementButtonBehaviour();
 }
 
 function displayError() {
@@ -122,24 +134,26 @@ function handleNavbarBehaviour() {
 }
 
 function addMovementBehaviour() {
-  document
-    .getElementById("add-income")
-    .addEventListener("click", (e) => addMovement(e, 1));
-
-  document
-    .getElementById("add-egress")
-    .addEventListener("click", (e) => addMovement(e, 2));
+  movementsTypes.forEach(mt => {
+    const buttonId = movementTypesButton.find(mtb => mtb.type == mt.name).button
+    if (buttonId) {
+      document
+        .getElementById(buttonId)
+        .addEventListener("click", (e) => addMovement(e, mt));
+    }
+  })
 }
 
 function movementButtonBehaviour() {
   document
     .getElementById("movement-add-button")
-    .addEventListener("click", (e) => clickedButton(e, "movement-add-button"));
-  document
-    .getElementById("movement-cancel-button")
-    .addEventListener("click", (e) =>
-      clickedButton(e, "movement-cancel-button")
-    );
+    .addEventListener("click", (e) => addMovementToList(e));
+  document.getElementById("movement-cancel-button").addEventListener('click', () => {
+    resetForm();
+    const addButton = document.getElementById("movement-add-button");
+    addButton.innerText = "Agregar";
+    addButton.onclick = addMovementToList;
+  });
 }
 
 function showContent(sectionId) {
@@ -174,12 +188,26 @@ function populateMovementsTable() {
     row.insertCell(2).innerText = reasons.find(
       (reason) => reason.id === movement.reasonId
     ).name;
-    row.insertCell(3).innerText = movement.note;
+    row.insertCell(3).innerText = movement.notes;
     row.insertCell(4).innerText = movement.amount;
     row.insertCell(5).innerText = getMovementTypeName(
       reasons.find((reason) => reason.id === movement.reasonId).id
     );
+    const actionsCell = row.insertCell(6);
+    const editButton = document.createElement('button');
+    editButton.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+    editButton.className = 'btn btn-sm btn-primary';
+    editButton.addEventListener('click', () => openEditModal(movement));
+    actionsCell.appendChild(editButton);
+
+    const deleteButton = document.createElement('button');
+    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteButton.className = 'btn btn-sm btn-danger ms-1';
+    deleteButton.addEventListener('click', () => confirmDeleteMovement(movement.id));
+    actionsCell.appendChild(deleteButton);
   });
+
+
 }
 
 function getMovementTypeName(reasonId) {
@@ -252,20 +280,150 @@ function generateSummaryChart() {
 }
 
 function addMovement(e, movementType) {
-  document.getElementById("entries-page").style.display = "block";
-  movementButtonBehaviour();
-  if (movementType === 1) {
-    document.getElementById("movement-type").setAttribute("value", "Ingreso");
-  } else {
-    if (movementType === 2) {
-      document.getElementById("movement-type").setAttribute("value", "Egreso");
-    }
+  document.getElementById("movement-type").setAttribute("value", movementType.name);
+  document.getElementById("movement-type").setAttribute("data-movement-type-id", movementType.id);
+  populateReasonsDropdown(movementType.id);
+}
+
+function addMovementToList(e) {
+  e.preventDefault();
+
+  const movementTypeId = document.getElementById('movement-type').getAttribute('data-movement-type-id');
+  const reasonId = Number(document.querySelector('.dropdown-toggle').getAttribute('data-selected-reason-id'));
+
+  if (!reasonId) {
+    alert("Seleccione un motivo!");
+    return
+  }
+
+  const amount = parseFloat(document.getElementById('amount').value);
+  const notes = document.getElementById('movement-notes').value;
+
+  if (isNaN(amount) || amount <= 0) {
+    alert("Ingrese un monto válido");
+    return;
+  }
+
+  const newMovement = new Movement(movements.at(-1).id + 1, new Date(), reasonId, notes, amount, currentUserId);
+
+  movements.push(newMovement);
+
+  populateMovementsTable();
+  generateSummaryChart();
+
+  resetForm();
+
+  const modalElement = document.getElementById("entries-page");
+  const modalInstance = bootstrap.Modal.getInstance(modalElement);
+  modalInstance.hide();
+
+}
+
+function populateReasonsDropdown(movementTypeId) {
+  const dropdownMenu = document.getElementById('reasons-dropdown');
+  const dropdownToggle = document.querySelector('.dropdown-toggle');
+
+  dropdownMenu.innerHTML = '';
+
+  const filteredReasons = reasons.filter((reason) => reason.movementTypeId === movementTypeId)
+  filteredReasons.forEach(filteredReason => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.className = 'dropdown-item';
+    a.href = '#';
+    a.innerText = filteredReason.name;
+    a.addEventListener('click', function () {
+      dropdownToggle.innerText = filteredReason.name;
+      dropdownToggle.setAttribute('data-selected-reason-id', filteredReason.id);
+      document.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+      a.classList.add('active')
+    })
+    li.appendChild(a);
+    dropdownMenu.appendChild(li);
+  })
+}
+
+function resetForm() {
+  document.querySelector('.dropdown-toggle').innerText = "Motivo";
+  document.querySelector('.dropdown-toggle').removeAttribute('data-selected-reason-id');
+  document.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+  document.getElementById("amount").value = "";
+  document.getElementById("movement-notes").value = "";
+}
+
+function openEditModal(movement) {
+  document.getElementById("movement-type").value = getMovementTypeName(movement.reasonId);
+  document.getElementById("movement-type").setAttribute("data-movement-type-id", reasons.find(reason => reason.id === movement.reasonId).movementTypeId);
+  document.querySelector('.dropdown-toggle').innerText = reasons.find(reason => reason.id === movement.reasonId).name;
+  document.querySelector('.dropdown-toggle').setAttribute('data-selected-reason-id', movement.reasonId);
+  document.getElementById("amount").value = movement.amount;
+  document.getElementById("movement-notes").value = movement.notes;
+
+  // Cambiar el texto del botón y agregar evento de edición
+  const addButton = document.getElementById("movement-add-button");
+  addButton.innerText = "Guardar";
+  addButton.onclick = (e) => editMovement(e, movement.id);
+
+  // Abrir el modal
+  const modalElement = new bootstrap.Modal(document.getElementById('entries-page'));
+  modalElement.show();
+}
+
+function editMovement(e, movementId) {
+  e.preventDefault();
+
+  const movementTypeId = document.getElementById("movement-type").getAttribute("data-movement-type-id");
+  const reasonId = Number(document.querySelector('.dropdown-toggle').getAttribute('data-selected-reason-id')); // Convertir a número
+
+  if (!reasonId) {
+    alert("Seleccione un motivo");
+    return;
+  }
+
+  const amount = parseFloat(document.getElementById("amount").value);
+  const notes = document.getElementById("movement-notes").value;
+
+  if (isNaN(amount) || amount <= 0) {
+    alert("Ingrese un monto válido");
+    return;
+  }
+
+  const movementIndex = movements.findIndex(m => m.id === movementId);
+  movements[movementIndex].reasonId = reasonId;
+  movements[movementIndex].notes = notes;
+  movements[movementIndex].amount = amount;
+
+  console.log("Movimiento editado:", movements[movementIndex]);
+
+  populateMovementsTable();
+  generateSummaryChart();
+
+  // Limpiar el formulario y resetear el dropdown
+  resetForm();
+
+  // Cerrar el modal
+  const modalElement = document.getElementById("entries-page");
+  const modalInstance = bootstrap.Modal.getInstance(modalElement);
+  modalInstance.hide();
+
+  // Restablecer el botón a su estado original
+  const addButton = document.getElementById("movement-add-button");
+  addButton.innerText = "Agregar";
+  addButton.onclick = addMovementToList;
+}
+
+function confirmDeleteMovement(movementId) {
+  if (confirm("¿Estás seguro de que deseas eliminar este movimiento?")) {
+    deleteMovement(movementId);
   }
 }
 
-function clickedButton(e, button) {
-  e.preventDefault();
-  if (button === "movement-cancel-button") {
-    document.getElementById("entries-page").style.display = "none";
-  }
+function deleteMovement(movementId) {
+  const movementIndex = movements.findIndex(m => m.id === movementId);
+  movements.splice(movementIndex, 1);
+
+  console.log("Movimiento eliminado:", movementId);
+
+  populateMovementsTable();
+  generateSummaryChart();
 }
