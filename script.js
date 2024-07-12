@@ -37,14 +37,14 @@ const movementType2 = new MovementType(2, "Egreso");
 
 const movementTypesButton = [
   {
-    type: 'Ingreso',
-    button: 'add-income'
+    type: "Ingreso",
+    button: "add-income",
   },
   {
-    type: 'Egreso',
-    button: 'add-egress'
-  }
-]
+    type: "Egreso",
+    button: "add-egress",
+  },
+];
 
 const reason1 = new Reason(1, "Razon 1", 1);
 const reason2 = new Reason(2, "Razon 2", 1);
@@ -82,8 +82,6 @@ const reasons = [
   reason10,
 ];
 const movements = [movement1, movement2, movement3];
-
-console.log(users);
 
 function login(e) {
   e.preventDefault();
@@ -134,26 +132,30 @@ function handleNavbarBehaviour() {
 }
 
 function addMovementBehaviour() {
-  movementsTypes.forEach(mt => {
-    const buttonId = movementTypesButton.find(mtb => mtb.type == mt.name).button
+  movementsTypes.forEach((mt) => {
+    const buttonId = movementTypesButton.find(
+      (mtb) => mtb.type == mt.name
+    ).button;
     if (buttonId) {
       document
         .getElementById(buttonId)
         .addEventListener("click", (e) => addMovement(e, mt));
     }
-  })
+  });
 }
 
 function movementButtonBehaviour() {
   document
     .getElementById("movement-add-button")
     .addEventListener("click", (e) => addMovementToList(e));
-  document.getElementById("movement-cancel-button").addEventListener('click', () => {
-    resetForm();
-    const addButton = document.getElementById("movement-add-button");
-    addButton.innerText = "Agregar";
-    addButton.onclick = addMovementToList;
-  });
+  document
+    .getElementById("movement-cancel-button")
+    .addEventListener("click", () => {
+      resetForm();
+      const addButton = document.getElementById("movement-add-button");
+      addButton.innerText = "Agregar";
+      addButton.onclick = addMovementToList;
+    });
 }
 
 function showContent(sectionId) {
@@ -194,20 +196,20 @@ function populateMovementsTable() {
       reasons.find((reason) => reason.id === movement.reasonId).id
     );
     const actionsCell = row.insertCell(6);
-    const editButton = document.createElement('button');
+    const editButton = document.createElement("button");
     editButton.innerHTML = '<i class="fas fa-pencil-alt"></i>';
-    editButton.className = 'btn btn-sm btn-primary';
-    editButton.addEventListener('click', () => openEditModal(movement));
+    editButton.className = "btn btn-sm btn-primary";
+    editButton.addEventListener("click", () => openEditModal(movement));
     actionsCell.appendChild(editButton);
 
-    const deleteButton = document.createElement('button');
+    const deleteButton = document.createElement("button");
     deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-    deleteButton.className = 'btn btn-sm btn-danger ms-1';
-    deleteButton.addEventListener('click', () => confirmDeleteMovement(movement.id));
+    deleteButton.className = "btn btn-sm btn-danger ms-1";
+    deleteButton.addEventListener("click", () =>
+      confirmDeleteMovement(movement.id)
+    );
     actionsCell.appendChild(deleteButton);
   });
-
-
 }
 
 function getMovementTypeName(reasonId) {
@@ -280,31 +282,48 @@ function generateSummaryChart() {
 }
 
 function addMovement(e, movementType) {
-  document.getElementById("movement-type").setAttribute("value", movementType.name);
-  document.getElementById("movement-type").setAttribute("data-movement-type-id", movementType.id);
+  e.preventDefault();
+  const movementTypeText = document.getElementById("movement-type");
+  movementTypeText.value = movementType.name;
+  document
+    .getElementById("movement-type")
+    .setAttribute("data-movement-type-id", movementType.id);
   populateReasonsDropdown(movementType.id);
 }
 
 function addMovementToList(e) {
   e.preventDefault();
 
-  const movementTypeId = document.getElementById('movement-type').getAttribute('data-movement-type-id');
-  const reasonId = Number(document.querySelector('.dropdown-toggle').getAttribute('data-selected-reason-id'));
+  const movementTypeId = document
+    .getElementById("movement-type")
+    .getAttribute("data-movement-type-id");
+  const reasonId = Number(
+    document
+      .querySelector(".dropdown-toggle")
+      .getAttribute("data-selected-reason-id")
+  );
 
   if (!reasonId) {
     alert("Seleccione un motivo!");
-    return
+    return;
   }
 
-  const amount = parseFloat(document.getElementById('amount').value);
-  const notes = document.getElementById('movement-notes').value;
+  const amount = parseFloat(document.getElementById("amount").value);
+  const notes = document.getElementById("movement-notes").value;
 
   if (isNaN(amount) || amount <= 0) {
     alert("Ingrese un monto válido");
     return;
   }
 
-  const newMovement = new Movement(movements.at(-1).id + 1, new Date(), reasonId, notes, amount, currentUserId);
+  const newMovement = new Movement(
+    movements.at(-1).id + 1,
+    new Date(),
+    reasonId,
+    notes,
+    amount,
+    currentUserId
+  );
 
   movements.push(newMovement);
 
@@ -317,45 +336,65 @@ function addMovementToList(e) {
   const modalInstance = bootstrap.Modal.getInstance(modalElement);
   modalInstance.hide();
 
+  console.log("agregaste algo gil");
 }
 
 function populateReasonsDropdown(movementTypeId) {
-  const dropdownMenu = document.getElementById('reasons-dropdown');
-  const dropdownToggle = document.querySelector('.dropdown-toggle');
+  const dropdownMenu = document.getElementById("reasons-dropdown");
+  const dropdownToggle = document.querySelector(".dropdown-toggle");
 
-  dropdownMenu.innerHTML = '';
+  dropdownMenu.innerHTML = "";
 
-  const filteredReasons = reasons.filter((reason) => reason.movementTypeId === movementTypeId)
-  filteredReasons.forEach(filteredReason => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.className = 'dropdown-item';
-    a.href = '#';
+  const filteredReasons = reasons.filter(
+    (reason) => reason.movementTypeId === movementTypeId
+  );
+  filteredReasons.forEach((filteredReason) => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.className = "dropdown-item";
+    a.href = "#";
     a.innerText = filteredReason.name;
-    a.addEventListener('click', function () {
+    a.addEventListener("click", function () {
       dropdownToggle.innerText = filteredReason.name;
-      dropdownToggle.setAttribute('data-selected-reason-id', filteredReason.id);
-      document.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
-      a.classList.add('active')
-    })
+      dropdownToggle.setAttribute("data-selected-reason-id", filteredReason.id);
+      document
+        .querySelectorAll(".dropdown-item")
+        .forEach((item) => item.classList.remove("active"));
+      a.classList.add("active");
+    });
     li.appendChild(a);
     dropdownMenu.appendChild(li);
-  })
+  });
 }
 
 function resetForm() {
-  document.querySelector('.dropdown-toggle').innerText = "Motivo";
-  document.querySelector('.dropdown-toggle').removeAttribute('data-selected-reason-id');
-  document.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+  document.querySelector(".dropdown-toggle").innerText = "Motivo";
+  document
+    .querySelector(".dropdown-toggle")
+    .removeAttribute("data-selected-reason-id");
+  document
+    .querySelectorAll(".dropdown-item")
+    .forEach((item) => item.classList.remove("active"));
   document.getElementById("amount").value = "";
   document.getElementById("movement-notes").value = "";
 }
 
 function openEditModal(movement) {
-  document.getElementById("movement-type").value = getMovementTypeName(movement.reasonId);
-  document.getElementById("movement-type").setAttribute("data-movement-type-id", reasons.find(reason => reason.id === movement.reasonId).movementTypeId);
-  document.querySelector('.dropdown-toggle').innerText = reasons.find(reason => reason.id === movement.reasonId).name;
-  document.querySelector('.dropdown-toggle').setAttribute('data-selected-reason-id', movement.reasonId);
+  document.getElementById("movement-type").value = getMovementTypeName(
+    movement.reasonId
+  );
+  document
+    .getElementById("movement-type")
+    .setAttribute(
+      "data-movement-type-id",
+      reasons.find((reason) => reason.id === movement.reasonId).movementTypeId
+    );
+  document.querySelector(".dropdown-toggle").innerText = reasons.find(
+    (reason) => reason.id === movement.reasonId
+  ).name;
+  document
+    .querySelector(".dropdown-toggle")
+    .setAttribute("data-selected-reason-id", movement.reasonId);
   document.getElementById("amount").value = movement.amount;
   document.getElementById("movement-notes").value = movement.notes;
 
@@ -365,15 +404,23 @@ function openEditModal(movement) {
   addButton.onclick = (e) => editMovement(e, movement.id);
 
   // Abrir el modal
-  const modalElement = new bootstrap.Modal(document.getElementById('entries-page'));
+  const modalElement = new bootstrap.Modal(
+    document.getElementById("entries-page")
+  );
   modalElement.show();
 }
 
 function editMovement(e, movementId) {
   e.preventDefault();
 
-  const movementTypeId = document.getElementById("movement-type").getAttribute("data-movement-type-id");
-  const reasonId = Number(document.querySelector('.dropdown-toggle').getAttribute('data-selected-reason-id')); // Convertir a número
+  const movementTypeId = document
+    .getElementById("movement-type")
+    .getAttribute("data-movement-type-id");
+  const reasonId = Number(
+    document
+      .querySelector(".dropdown-toggle")
+      .getAttribute("data-selected-reason-id")
+  ); // Convertir a número
 
   if (!reasonId) {
     alert("Seleccione un motivo");
@@ -388,7 +435,19 @@ function editMovement(e, movementId) {
     return;
   }
 
-  const movementIndex = movements.findIndex(m => m.id === movementId);
+  // const modifiedMovement = movements.map((movement) => {
+  //   if (movement.id === movementId) {
+  //     return {
+  //       ...movement,
+  //       date: new Date(),
+  //       reasonId: movementId.reasonId,
+  //       notes: movementId.notes,
+  //       amount: movementId.amount,
+  //     };
+  //   }
+  // });
+
+  const movementIndex = movements.findIndex((m) => m.id === movementId);
   movements[movementIndex].reasonId = reasonId;
   movements[movementIndex].notes = notes;
   movements[movementIndex].amount = amount;
@@ -419,7 +478,7 @@ function confirmDeleteMovement(movementId) {
 }
 
 function deleteMovement(movementId) {
-  const movementIndex = movements.findIndex(m => m.id === movementId);
+  const movementIndex = movements.findIndex((m) => m.id === movementId);
   movements.splice(movementIndex, 1);
 
   console.log("Movimiento eliminado:", movementId);
