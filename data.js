@@ -4,15 +4,10 @@ import { User, MovementType, Reason, Movement } from './models.js';
 const movementType1 = new MovementType(1, "Ingreso");
 const movementType2 = new MovementType(2, "Egreso");
 
+// Botones de MovementType
 const movementTypesButton = [
-  {
-    type: "Ingreso",
-    button: "add-income",
-  },
-  {
-    type: "Egreso",
-    button: "add-egress",
-  },
+  { type: "Ingreso", button: "add-income" },
+  { type: "Egreso", button: "add-egress" }
 ];
 
 // Instancias de Reason
@@ -42,10 +37,25 @@ const users = [
   new User("user2@example.com", "456", 2)
 ];
 
-// Instancias de Movement Types
 const movementsTypes = [movementType1, movementType2]
 
-var currentUserId = null;
-var currentMovementToEdit = new Movement(null, null, null, null, null, null);
+let currentUserId = null;
+let currentMovementToEdit = new Movement(null, null, null, null, null, null);
 
-export { movementsTypes, movementTypesButton, reasons, movements, users, currentUserId, currentMovementToEdit };
+function setCurrentUserId(id){
+  currentUserId = id
+}
+
+function getCurrentUserId(){
+  return currentUserId;
+}
+
+function setCurrentMovementToEdit(movement){
+  currentMovementToEdit = movement;
+}
+
+function getCurrentMovementToEdit(){
+  return currentMovementToEdit;
+}
+
+export { users, movements, reasons, movementTypesButton, movementsTypes, setCurrentUserId, getCurrentUserId, setCurrentMovementToEdit, getCurrentMovementToEdit };
